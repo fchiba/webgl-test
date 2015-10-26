@@ -1,0 +1,128 @@
+<!doctype html5>
+<title>particle</title>
+<meta name="xviewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<script>
+function create_shader(gl, id){
+    var shader;
+    var scriptElement = document.getElementById(id);
+
+    if(!scriptElement){return;}
+
+    switch(scriptElement.type){
+        case 'x-shader/x-vertex':
+            shader = gl.createShader(gl.VERTEX_SHADER);
+            break;
+
+        case 'x-shader/x-fragment':
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+            break;
+        default :
+            return;
+    }
+
+    gl.shaderSource(shader, scriptElement.text);
+
+    gl.compileShader(shader);
+
+    if(gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+        return shader;
+    }else{
+        console.error(gl.getShaderInfoLog(shader));
+    }
+}
+function create_program(gl, vs, fs){
+    var program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+
+    if(gl.getProgramParameter(program, gl.LINK_STATUS)){
+        gl.useProgram(program);
+        return program;
+    }else{
+        console.error(gl.getProgramInfoLog(program));
+    }
+}
+
+function create_vbo(gl, data){
+    var vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    return vbo;
+}
+
+function draw() {
+    var str = "柴犬";
+    var span = document.createElement("span");
+    span.innerHTML = str;
+    span.style.fontFamily = "Arial";
+    span.style.fontSize = "15px";
+    var block = document.createElement("div");
+    block.style.display = "inline-block";
+    block.style.width = "10px";
+    block.style.height = "1px";
+    block.style.backgroundColor = "red";
+    var block2 = document.createElement("div");
+    block2.style.display = "inline-block";
+    block2.style.width = "10px";
+    block2.style.height = "1px";
+    block2.style.backgroundColor = "green";
+    var div = document.createElement("div");
+    div.appendChild(block);
+    div.appendChild(block2);
+    div.appendChild(span);
+
+    document.body.appendChild(div);
+    console.log(span);
+    var width = span.offsetWidth;
+    var height = span.offsetHeight;
+    console.log(width, height);
+    block.style.verticalAlign = "baseline";
+    var ascent = block.offsetTop - span.offsetTop;
+    var descent = height - ascent;
+    console.log(ascent, descent, height);
+    //block.style.verticalAlign = "top";
+    //console.log(block.offsetTop);
+
+    //document.body.removeChild(div);
+
+    var canvas = document.getElementById("c2");
+    c2.width = width;
+    c2.height = height;
+    var ctx = canvas.getContext("2d");
+    ctx.font = "15px 'Arial'";
+    console.log(ctx.measureText(str));
+    ctx.fillText(str, 0, height-descent);
+    var imageData = ctx.getImageData(0, 0, width, height);
+    var data = imageData.data;
+    var dataLength = width*height*4;
+    console.log(imageData);
+}
+window.onload = function() {
+    draw();
+};
+</script>
+<body>
+<script id="vs" type="x-shader/x-vertex">
+attribute mediump vec3 position;
+attribute mediump vec2 textureCoord;
+uniform mat3 transform;
+varying mediump vec2 vTextureCoord;
+void main(void)
+{
+    gl_Position = vec4(transform * position, 1.0);
+    //gl_Position = vec4(position, 1.0);
+    vTextureCoord = textureCoord;
+}
+</script>
+<script id="fs" type="x-shader/x-fragment">
+uniform sampler2D texture;
+varying mediump vec2 vTextureCoord;
+void main(void)
+{
+    gl_FragColor = texture2D(texture, vTextureCoord);
+}
+</script>
+<canvas id="c2"></canvas>
+</body>
